@@ -1,40 +1,41 @@
 import AV from 'leancloud-storage'
+import People from './People';
 
-class People extends AV.Object {
+class Comment extends AV.Object {
     
-    constructor(name,age,addr){
+    constructor(likes,content,people){
         //首先需要调用父级的构造函数
         super();
         // 需要向 SDK 注册这个 Class
-        AV.Object.register(People);
-        this.set('name',name);
-        this.set('age',age);
-        this.set('addr',addr);
+        AV.Object.register(Comment);
+        this.set('likes',likes);
+        this.set('content',content);
+        this.set('people',people)
     }
 
     //属性的get set方法
-    getName(){
-        return this.get('name');
+    getLikes(){
+        return this.get('likes');
     }
 
-    setName(name){
-        this.set('name',name);
+    setLikes(likes){
+        this.set('likes',likes);
     }
 
-    getAge(){
-        return this.get('age');
+    getContent(){
+        return this.get('content');
     }
 
-    setAge(age){
-        this.set('age',age);
+    setContent(content){
+        this.set('content',content);
     }
 
-    getAddr(){
-        return this.get('addr');
+    getPeople(){
+        return this.get('people');
     }
 
-    setAddr(addr){
-        this.set('addr',addr);
+    setPeople(people){
+        this.set('people',people);
     }
 
     /**
@@ -60,4 +61,4 @@ class People extends AV.Object {
     }
 }
 
-export default People 
+export default Comment 
