@@ -37,6 +37,22 @@ class People extends AV.Object {
         this.set('addr',addr);
     }
 
+    getImg(){
+        this.get('img');
+    }
+
+    setImg(img){
+        this.set('img',img);
+    }
+
+    getHeadImg(){
+        this.get('head_img');
+    }
+
+    setHeadImg(head_img){
+        this.set('head_img',head_img);
+    }
+
     /**
      * 通过id获取对象
      * @param {*} id 查询参数

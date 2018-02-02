@@ -15,9 +15,12 @@
     <br>
     <input type="button" value="Pointer查询" @click="pointerQuery">
     <br>
+    <input type="button" value="内嵌查询" @click="innerQuery">
+    <br>
     <div>
       <input type="file" name="上传文件" id="uploadFile" @change="getFile" >
       <input type="button" value="上传" @click="upload">
+      <input type="button" value="查询文件" @click="queryFile">
     </div>
     <div v-show="progressCurrent!=0">
       <progress :value="progressCurrent" :max="progressMax" ></progress>
@@ -32,7 +35,8 @@
     <h4 v-text="people.addr"></h4>
     <h4 v-text="people.createdAt"></h4>
     <ul>
-      <li v-for="(p,index) in peoples" :key="index" v-text="p"></li>
+     <li v-for="(p,index) in peoples" :key="index" v-text="p.get('img').get('url')"></li>
+     <img v-for="(p,index) in peoples" :key="index" :src="p.get('img').get('url')">
     </ul>
     <ul>
       <li v-for="(c,index) in comments" :key="index" v-text="c"></li>
@@ -147,9 +151,12 @@ export default {
     },
     deleteData(){//删除对象
       var people = new People();
-      people.id='5a716dfdd50eee0039807aeb';
+      people.id='5a716dfdd50eee0039807aea';
       people.destroy().then(function (success) {
         // 删除成功
+        if(success.get('name')==null){
+          alert('删除的用户不存在');
+        }
         console.log(success);
       }, function (error) {
         // 删除失败
@@ -195,32 +202,42 @@ export default {
     getPointerData(){//获取
       var comment = new Comment();
       comment.id='5a72aa0bee920a0045389402';
-      comment.fetch({
-        include:['people']
-      }).then(
+      comment.fetch(
+        {
+          include:['people']
+        }
+      ).then(
         function(commentObj){
+          console.log(commentObj.toJSON());
           let people = commentObj.getPeople();
           console.log(people.toJSON());
-          console.log(commentObj.toJSON());
+          
         }
       );
     },
-    getFile($event){
+    getFile($event){//获取当前所选择的文件对象
       this.file = $event.target.files[0];
       console.log('filename='+this.file.name);
     },
-    upload(){
+    upload(){//文件上传以及与人员的绑定
       if(this.file!=''){
         var file = new AV.File(this.file.name, this.file);
         var _this = this;
         file.save({
-          onprogress:function(e){
-            console.log('progress='+e.loaded+' '+e.total);
+          onprogress:function(e){//上传进度回调函数
+            console.log('progress:已上传:'+e.loaded+' 总大小:'+e.total+' 当前所占百分比:'+e.percent);
+            //更新进度条
             _this.progressCurrent = e.percent;
           }
         }).then(function(file) {
             // 文件保存成功
             console.log(file.url());
+            
+            //与People对象进行关联
+            var people = new People();
+            people.id='5a71914b0b61600044503401';
+            people.setImg(file);
+            people.save();
         }, function(error) {
             // 异常处理
             console.error(error);
@@ -229,7 +246,17 @@ export default {
         alert('请选择文件后才能点击上传！');
       }
     },
-    conditionsQuery(){//多条件查询
+    queryFile(){//文件的关联查询
+      var query = People.getQuery();
+      query.exists('img');//img字段不为null
+      query.include('img');
+      query.find().then(
+        function (results) {
+          this.peoples = results;
+        }.bind(this)
+      );
+    },
+    conditionsQuery(){//多条件查询，查询出年龄等于20并且姓张的所有人
       var query = People.getQuery();
       query.equalTo('age',12);//人员年龄等于12
       query.startsWith('name','张');//姓张的人员
@@ -245,7 +272,7 @@ export default {
         }
       );
     },
-    pointerQuery(){//pointer查询
+    pointerQuery(){//pointer查询 查询People发表的所有的Comment对象
       var people = new People();
       people.id='5a716de31b69e6003c5a0dfc';
       var query = Comment.getQuery();
@@ -261,6 +288,28 @@ export default {
             }.bind(this)
           );
         }.bind(this)
+      );
+    },
+    innerQuery(){//内嵌查询
+      //构建内嵌查询
+      var innerQuery =People.getQuery();
+
+      //将内嵌查询赋予目标查询
+      var query = Comment.getQuery();
+      query.matchesQuery('people',innerQuery);
+      //内嵌查询条件一定要放到query.matchesQuery之后
+      query.greaterThan('likes',0);
+      query.include('people');
+      //query.doesNotMatchQuery('people',innerQuery);
+
+      query.find().then(
+        function(results){
+          console.log('length='+results.length);
+          this.comments=results;
+        }.bind(this),
+        function(error){
+
+        }
       );
     }
   }
